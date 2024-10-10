@@ -24,7 +24,7 @@ namespace TestConnection
     {
 
         //paramètres du broker mqtt auquel on veut se connecter (et les identifiants si il en faut)
-        string BrokerAddress = "172.31.254.100";
+        string BrokerAddress = "172.31.254.87";
         int BrokerPort = 1883;
         string Username = "matheo";
         string Password = "matheo";
@@ -35,6 +35,8 @@ namespace TestConnection
         string humidity;
         string temperature;
         string decibels;
+        string air_quality;
+        int test = 0;
 
         async void ConnexionBroker()
         {
@@ -49,7 +51,6 @@ namespace TestConnection
             .WithTcpServer(BrokerAddress, BrokerPort)
             .WithCredentials(Username, Password)
             .WithCleanSession();
-            //variable qui stocke les paramètres de connexion
             var parametres_mqtt = parametres_connexion_client.Build();
 
             //liste de filtres mqtt
@@ -57,9 +58,11 @@ namespace TestConnection
             //liste ou on rentre les topics auxquels on veut s'abonner (attention mettre le chemin entier)
             List<string> topicsVoullus = new List<string>()
             {
-            "Etage1/KM103/humidity",
-            "Etage1/KM103/temperature",
-            "Etage1/KM103/decibels"
+            "KM103/humidity",
+            "KM103/temperature",
+            "KM103/decibels",
+            "KM103/air_quality",
+            "KM103/emergency"
             };
             //boucle qui crée un filtre pour chaque topic dans la liste topicsVoullus et qui l'ajoute a la liste des filtres
             foreach (var topic in topicsVoullus)
@@ -73,7 +76,7 @@ namespace TestConnection
             {
                 //tentative de connexion a un borker mqtt avec les paramètres entrés
                 await clientmqtt.ConnectAsync(parametres_mqtt);
-                MessageBox.Show("Connecté au broker");
+                MessageBox.Show("Connecté au broker", "Connexion", MessageBoxButton.OK);
 
                 //constructeur des options de filtres (on donne en paramètre la liste des filtres)
                 var optionsAbonnement = new MqttClientSubscribeOptions()
@@ -84,8 +87,7 @@ namespace TestConnection
                 //fonction d'abonnement aux topics (avec en paramètres la liste des filtres créée)
                 await clientmqtt.SubscribeAsync(optionsAbonnement);
                 //fonction qui appelle la fonction GestionMessage a chaque fois qu'un message est reçu
-                clientmqtt.ApplicationMessageReceivedAsync += GestionMessage;
-                MessageBox.Show("Abonnée aux topics");
+                MessageBox.Show("Abonnée aux topics", "Connexion", MessageBoxButton.OK);
             }
 
             catch (Exception)
@@ -95,25 +97,31 @@ namespace TestConnection
         }
 
         //fonction qui convertit le payload des messages attachés aux topics en chaine
-        private Task GestionMessage(MqttApplicationMessageReceivedEventArgs e)
+        public Task GestionMessage(MqttApplicationMessageReceivedEventArgs e)
         {
             var topic = e.ApplicationMessage.Topic;
             var payload = Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
 
             switch (topic)
             {
-                case "Etage1/KM103/humidity":
+                case "KM103/humidity":
                     humidity = payload;
                     break;
-                case "Etage1/KM103/temperature":
+                case "KM103/temperature":
                     temperature = payload;
                     break;
-                case "Etage1/KM103/decibels":
+                case "KM103/decibels":
                     decibels = payload;
                     break;
+                case "KM103/air_quality":
+                    air_quality = payload;
+                    break;
+                case "KM103/emergency":
+                    MessageBox.Show("Alerte d'urgence : " + payload);
+                    Application.Current.Shutdown();
+                    break;
             }
-            MessageBox.Show($"Humidité : {humidity}\nTempérature : {temperature}\nDécibels : {decibels}");
-
+            MessageBox.Show($"Humidité : {humidity}\nTempérature : {temperature}\nDécibels : {decibels}\nQualité :{air_quality}");
             return Task.CompletedTask;
         }
 
@@ -121,6 +129,16 @@ namespace TestConnection
         {
             InitializeComponent();
             ConnexionBroker();
+            try
+            {
+                //fonction qui appelle la fonction GestionMessage a chaque fois qu'un message est reçu
+                clientmqtt.ApplicationMessageReceivedAsync += GestionMessage;
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Erreur lors de la réception des messages");
+            }
+
         }
     }
 }

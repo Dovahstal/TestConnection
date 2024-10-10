@@ -38,6 +38,9 @@
     <Reference Include="MQTTnet, Version=4.3.7.1207, Culture=neutral, PublicKeyToken=fdb7629f2e364a63, processorArchitecture=MSIL">
       <HintPath>packages\MQTTnet.4.3.7.1207\lib\net461\MQTTnet.dll</HintPath>
     </Reference>
+    <Reference Include="MQTTnet.Extensions.ManagedClient, Version=4.3.7.1207, Culture=neutral, PublicKeyToken=fdb7629f2e364a63, processorArchitecture=MSIL">
+      <HintPath>packages\MQTTnet.Extensions.ManagedClient.4.3.7.1207\lib\net461\MQTTnet.Extensions.ManagedClient.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
